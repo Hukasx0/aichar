@@ -48,31 +48,32 @@ struct LoadCharacterClass {
     mes_example: Option<String>,
 }
 
-/*
-struct ExportTavernAi {
-    name: String,
-    description: String,
-    personality: String,
-    scenario: String,
-    first_mes: String,
-    mes_example: String,
+#[derive(Serialize)]
+struct ExportTavernAi<'a> {
+    name: &'a str,
+    description: &'a str,
+    personality: &'a str,
+    scenario: &'a str,
+    first_mes: &'a str,
+    mes_example: &'a str,
 }
 
-struct ExportTextGenerationWebuiPygmalion {
-    char_name: String,
-    char_persona: String,
-    world_scenario: String,
-    char_greeting: String,
-    example_dialogue: String,
+#[derive(Serialize)]
+struct ExportTextGenerationWebuiPygmalion<'a> {
+    char_name: &'a str,
+    char_persona: &'a str,
+    world_scenario: &'a str,
+    char_greeting: &'a str,
+    example_dialogue: &'a str,
 }
 
-struct ExportAiCompanion {
-    name: String,
-    description: String,
-    first_mes: String,
-    mes_example: String,
+#[derive(Serialize)]
+struct ExportAiCompanion<'a> {
+    name: &'a str,
+    description: &'a str,
+    first_mes: &'a str,
+    mes_example: &'a str,
 }
-*/
 
 #[pyfunction]
 fn create_character(name: &str, summary: &str, personality: &str, scenario: &str, greeting_message: &str, example_messages: &str, image_path: &str) -> PyResult<CharacterClass> {
@@ -269,17 +270,109 @@ fn export_character_json_file(character_data: CharacterClass, export_json_path: 
 #[pyfunction]
 fn export_character_card_file(character_data: CharacterClass, export_card_path: &str) -> PyResult<()> {
 }
+*/
 
 #[pyfunction]
-fn export_json(character_data: CharacterClass, type: &str) -> PyResult<String>  {
-
+fn export_json(character_data: CharacterClass, format_type: &str) -> PyResult<String>  {
+    match format_type.to_lowercase().as_str() {
+        "tavernai" => {
+            let export: ExportTavernAi = ExportTavernAi {
+                name: &character_data.name,
+                description: &character_data.summary,
+                personality: &character_data.personality,
+                scenario: &character_data.scenario,
+                first_mes: &character_data.greeting_message,
+                mes_example: &character_data.example_messages,
+            };
+            return Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"));
+        },
+        "textgenerationwebui" | "pygmalion" => {
+            let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
+                char_name: &character_data.name,
+                char_persona: if (&character_data.personality).is_empty() {
+                    &character_data.summary
+                } else {
+                    &character_data.personality
+                },
+                world_scenario: &character_data.scenario,
+                char_greeting: &character_data.greeting_message,
+                example_dialogue: &character_data.example_messages,
+            };
+            return Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"));
+        },
+        "aicompanion" => {
+            let export: ExportAiCompanion = ExportAiCompanion {
+                name: &character_data.name,
+                description: if (&character_data.personality).is_empty() {
+                    &character_data.summary
+                } else {
+                    &character_data.personality
+                },
+                first_mes: &character_data.greeting_message,
+                mes_example: &character_data.example_messages,
+            };
+            return Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"));
+        },
+        _ => {
+            return Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'textgenerationwebui', 'pygmalion', 'aicompanion'"));
+        }
+    }
 }
 
 #[pyfunction]
-fn export_json_file(character_data: CharacterClass, type: &str) -> PyResult<String>  {
-
+fn export_json_file(character_data: CharacterClass, format_type: &str, export_json_path: &str) -> PyResult<()>  {
+    match format_type.to_lowercase().as_str() {
+        "tavernai" => {
+            let export: ExportTavernAi = ExportTavernAi {
+                name: &character_data.name,
+                description: &character_data.summary,
+                personality: &character_data.personality,
+                scenario: &character_data.scenario,
+                first_mes: &character_data.greeting_message,
+                mes_example: &character_data.example_messages,
+            };
+            let json_string = serde_json::to_string_pretty(&export).expect("Error while serializing JSON");
+            let mut file = File::create(export_json_path).expect(&format!("Cannot create file at path: {}", export_json_path));
+            file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
+        },
+        "textgenerationwebui" | "pygmalion" => {
+            let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
+                char_name: &character_data.name,
+                char_persona: if (&character_data.personality).is_empty() {
+                    &character_data.summary
+                } else {
+                    &character_data.personality
+                },
+                world_scenario: &character_data.scenario,
+                char_greeting: &character_data.greeting_message,
+                example_dialogue: &character_data.example_messages,
+            };
+            let json_string = serde_json::to_string_pretty(&export).expect("Error while serializing JSON");
+            let mut file = File::create(export_json_path).expect(&format!("Cannot create file at path: {}", export_json_path));
+            file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
+        },
+        "aicompanion" => {
+            let export: ExportAiCompanion = ExportAiCompanion {
+                name: &character_data.name,
+                description: if (&character_data.personality).is_empty() {
+                    &character_data.summary
+                } else {
+                    &character_data.personality
+                },
+                first_mes: &character_data.greeting_message,
+                mes_example: &character_data.example_messages,
+            };
+            let json_string = serde_json::to_string_pretty(&export).expect("Error while serializing JSON");
+            let mut file = File::create(export_json_path).expect(&format!("Cannot create file at path: {}", export_json_path));
+            file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
+        },
+        _ => {
+            return Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'textgenerationwebui', 'pygmalion', 'aicompanion'"));
+        }
+    };
+    Ok(())
 }
-
+/*
 #[pyfunction]
 fn export_card_file(character_data: CharacterClass, type: &str, export_card_path: &str) -> PyResult<()> {
 
@@ -303,5 +396,7 @@ fn aichar(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(export_character_json, m)?)?;
     m.add_function(wrap_pyfunction!(export_character_json_file, m)?)?;
 //    m.add_function(wrap_pyfunction!(export_character_card_file, m)?)?;
+    m.add_function(wrap_pyfunction!(export_json, m)?)?;
+    m.add_function(wrap_pyfunction!(export_json_file, m)?)?;
     Ok(())
 }
