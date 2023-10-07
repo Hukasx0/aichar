@@ -1,5 +1,12 @@
 # Aichar
+[![PyPI version](https://badge.fury.io/py/aichar.svg)](https://badge.fury.io/py/aichar)
+
 Python library for creating/transporting AI characters between different frontends ([TavernAI](https://github.com/TavernAI/TavernAI), [TextGenerationWebUI](https://github.com/oobabooga/text-generation-webui), [AI-companion](https://github.com/Hukasx0/ai-companion), Pygmalion) 
+
+## Installation
+```py
+pip install aichar
+```
 
 ## Usage
 ### Creating a Character
