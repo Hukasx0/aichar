@@ -88,6 +88,48 @@ fn create_character(name: &str, summary: &str, personality: &str, scenario: &str
 }
 
 #[pyfunction]
+fn change_character_name(mut character_data: CharacterClass, name: &str) -> PyResult<CharacterClass> {
+    character_data.name = name.to_string();
+    Ok(character_data)
+}
+
+#[pyfunction]
+fn change_character_summary(mut character_data: CharacterClass, summary: &str) -> PyResult<CharacterClass> {
+    character_data.summary = summary.to_string();
+    Ok(character_data)
+}
+
+#[pyfunction]
+fn change_character_personality(mut character_data: CharacterClass, personality: &str) -> PyResult<CharacterClass> {
+    character_data.personality = personality.to_string();
+    Ok(character_data)
+}
+
+#[pyfunction]
+fn change_character_scenario(mut character_data: CharacterClass, scenario: &str) -> PyResult<CharacterClass> {
+    character_data.scenario = scenario.to_string();
+    Ok(character_data)
+}
+
+#[pyfunction]
+fn change_character_greeting_message(mut character_data: CharacterClass, greeting_message: &str) -> PyResult<CharacterClass> {
+    character_data.greeting_message = greeting_message.to_string();
+    Ok(character_data)
+}
+
+#[pyfunction]
+fn change_character_example_messages(mut character_data: CharacterClass, example_messages: &str) -> PyResult<CharacterClass> {
+    character_data.example_messages = example_messages.to_string();
+    Ok(character_data)
+}
+
+#[pyfunction]
+fn change_character_image_path(mut character_data: CharacterClass, image_path: &str) -> PyResult<CharacterClass> {
+    character_data.image_path = Some(image_path.to_string());
+    Ok(character_data)
+}
+
+#[pyfunction]
 fn print_character(character_data: CharacterClass) -> PyResult<()> {
     let mut character_str = String::new();
 
@@ -180,7 +222,11 @@ fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
 fn export_character_json(character_data: CharacterClass) -> PyResult<String> {
     let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
         char_name: &character_data.name,
-        char_persona: &character_data.personality,
+        char_persona: if (&character_data.personality).is_empty() {
+            &character_data.summary
+        } else {
+            &character_data.personality
+        },
         world_scenario: &character_data.scenario,
         char_greeting: &character_data.greeting_message,
         example_dialogue: &character_data.example_messages,
@@ -198,7 +244,11 @@ fn export_character_json(character_data: CharacterClass) -> PyResult<String> {
 fn export_character_json_file(character_data: CharacterClass, export_json_path: &str) -> PyResult<()> {
     let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
         char_name: &character_data.name,
-        char_persona: &character_data.personality,
+        char_persona: if (&character_data.personality).is_empty() {
+            &character_data.summary
+        } else {
+            &character_data.personality
+        },
         world_scenario: &character_data.scenario,
         char_greeting: &character_data.greeting_message,
         example_dialogue: &character_data.example_messages,
@@ -215,9 +265,9 @@ fn export_character_json_file(character_data: CharacterClass, export_json_path: 
     Ok(())
 }
 
-/*#[pyfunction]
+/*
+#[pyfunction]
 fn export_character_card_file(character_data: CharacterClass, export_card_path: &str) -> PyResult<()> {
-
 }
 
 #[pyfunction]
@@ -239,11 +289,19 @@ fn export_card_file(character_data: CharacterClass, type: &str, export_card_path
 #[pymodule]
 fn aichar(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(create_character, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_name, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_summary, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_personality, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_scenario, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_greeting_message, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_example_messages, m)?)?;
+    m.add_function(wrap_pyfunction!(change_character_image_path, m)?)?;
     m.add_function(wrap_pyfunction!(print_character, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_json, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_json_file, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_card_file, m)?)?;
     m.add_function(wrap_pyfunction!(export_character_json, m)?)?;
     m.add_function(wrap_pyfunction!(export_character_json_file, m)?)?;
+//    m.add_function(wrap_pyfunction!(export_character_card_file, m)?)?;
     Ok(())
 }
