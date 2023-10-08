@@ -275,7 +275,7 @@ fn export_character_card_file(character_data: CharacterClass, export_card_path: 
 #[pyfunction]
 fn export_json(character_data: CharacterClass, format_type: &str) -> PyResult<String>  {
     match format_type.to_lowercase().as_str() {
-        "tavernai" => {
+        "tavernai" | "sillytavern" => {
             let export: ExportTavernAi = ExportTavernAi {
                 name: &character_data.name,
                 description: &character_data.summary,
@@ -314,7 +314,7 @@ fn export_json(character_data: CharacterClass, format_type: &str) -> PyResult<St
             return Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"));
         },
         _ => {
-            return Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'textgenerationwebui', 'pygmalion', 'aicompanion'"));
+            return Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"));
         }
     }
 }
@@ -322,7 +322,7 @@ fn export_json(character_data: CharacterClass, format_type: &str) -> PyResult<St
 #[pyfunction]
 fn export_json_file(character_data: CharacterClass, format_type: &str, export_json_path: &str) -> PyResult<()>  {
     match format_type.to_lowercase().as_str() {
-        "tavernai" => {
+        "tavernai" | "sillytavern" => {
             let export: ExportTavernAi = ExportTavernAi {
                 name: &character_data.name,
                 description: &character_data.summary,
@@ -367,7 +367,7 @@ fn export_json_file(character_data: CharacterClass, format_type: &str, export_js
             file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
         },
         _ => {
-            return Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'textgenerationwebui', 'pygmalion', 'aicompanion'"));
+            return Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"));
         }
     };
     Ok(())
