@@ -154,24 +154,7 @@ impl CharacterClass {
     }
 
     fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
-        let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
-            char_name: &self.name,
-            char_persona: if self.personality.is_empty() {
-                &self.summary
-            } else {
-                &self.personality
-            },
-            world_scenario: &self.scenario,
-            char_greeting: &self.greeting_message,
-            example_dialogue: &self.example_messages,
-            name: &self.name,
-            description: &self.summary,
-            personality: &self.personality,
-            scenario: &self.scenario,
-            first_mes: &self.greeting_message,
-            mes_example: &self.example_messages,
-        };
-        let json_string = serde_json::to_string_pretty(&export_class).expect("Error while serializing JSON");
+        let json_string = self.export_neutral_json()?;
         let mut file = File::create(export_json_path).expect(&format!("Cannot create file at path: {}", export_json_path));
         file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
         Ok(())
@@ -229,6 +212,14 @@ impl CharacterClass {
         file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
         Ok(())
     }
+
+/*                  TODO: Add export method as character cards
+    fn export_character_card_file(&self, export_card_path: &str) -> PyResult<()> {
+    }
+
+    fn export_card_file(&self, type: &str, export_card_path: &str) -> PyResult<()> {
+    }
+*/
 }
 
 #[derive(Serialize)]
@@ -371,23 +362,11 @@ fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
     })
 }
 
-/*
-#[pyfunction]
-fn export_character_card_file(character_data: CharacterClass, export_card_path: &str) -> PyResult<()> {
-}
-
-#[pyfunction]
-fn export_card_file(character_data: CharacterClass, type: &str, export_card_path: &str) -> PyResult<()> {
-
-}
-*/
-
 #[pymodule]
 fn aichar(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(create_character, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_json, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_json_file, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_card_file, m)?)?;
-//    m.add_function(wrap_pyfunction!(export_character_card_file, m)?)?;
     Ok(())
 }
