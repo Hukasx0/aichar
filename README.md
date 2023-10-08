@@ -37,73 +37,84 @@ character = aichar.load_character_json_file("character.json")
 ```
 
 ### Modifying Character Attributes
-You can modify the attributes of a character using various functions provided by the aichar library. Here are some examples:
+You can modify the attributes of a character. Here are some examples:
 ```py
 # Load a character card from a JSON file
 character = aichar.load_character_json_file("character_data.json")
 
 # Change character name
-character = aichar.change_character_name(character, "New Name")
+character.name = "New Name"
 
 # Change character summary
-character = aichar.change_character_summary(character, "New Summary")
+character.summary = "New Summary"
 
 # Change character personality
-character = aichar.change_character_personality(character, "New Personality")
+character.personality = "New Personality"
 
 # Change character scenario
-character = aichar.change_character_scenario(character, "New Scenario")
+character.scenario = "New Scenario"
 
 # Change character greeting message
-character = aichar.change_character_greeting_message(character, "New Greeting Message")
+character.greeting_message = "New Greeting Message"
 
 # Change character example messages
-character = aichar.change_character_example_messages(character, "New Example Messages")
+character.example_messages = "New Example Messages"
 
 # Change character image path (needed if you want to export character as character png card)
-character = aichar.change_character_image_path(character, "New Image Path")
+character.image_path = "New Image Path"
 ```
 
-### Printing Character Information
-You can print the character's information to the console using the print_character function:
+### Printing Character Information Summary
+You can print the character's information to the console using the print_summary function:
 ```py
-aichar.print_character(character)
+character.print_summary()
+```
+
+### Accessing Character Attributes
+You can access character's attributes using the provided getter methods. For example:
+```py
+print("Character Name: ", character.name)
+print("Character Summary: ", character.summary)
+print("Character Personality: ", character.personality)
+image_path = character.image_path
 ```
 
 ### Exporting Character Data
-You can export the character's data in different formats using the export_json function. Supported export formats include "tavernai," "textgenerationwebui" (or "pygmalion"), and "aicompanion."
+You can export the character's data in different formats using the export_json function. Supported export formats include "tavernai" (or "sillytavern"), "textgenerationwebui" (or "pygmalion"), and "aicompanion."
 ```py
 # Export character data in "tavernai" format
-tavernai_data = aichar.export_json(character, "tavernai")
+tavernai_json_string = character.export_json("tavernai")
 # or to file
-aichar.export_json_file(character, "tavernai", "tavernai_character_data.json")
+character.export_json_file("tavernai", "tavernai_character_data.json")
 
 # Export character data in "sillytavern" format
-sillytavern_data = aichar.export_json(character, "sillytavern")
+sillytavern_json_string = character.export_json("sillytavern")
 # or to file
-aichar.export_json_file(character, "sillytavern", "sillytavern_character_data.json")
+character.export_json_file("sillytavern", "sillytavern_character_data.json")
 
 # Export character data in "textgenerationwebui" format
-textgenerationwebui_data = aichar.export_json(character, "textgenerationwebui")
+textgenerationwebui_json_string = character.export_json("textgenerationwebui")
 # or to file
-aichar.export_json_file(character, "textgenerationwebui", "textgenerationwebui_character_data.json")
+character.export_json_file("textgenerationwebui", "textgenerationwebui_character_data.json")
 
 # Export character data in "pygmalion" format
-pygmalion_data = aichar.export_json(character, "pygmalion")
+pygmalion_json_string = character.export_json("pygmalion")
 # or to file
-aichar.export_json_file(character, "pygmalion", "pygmalion_character_data.json")
+character.export_json_file("pygmalion", "pygmalion_character_data.json")
 
 # Export character data in "aicompanion" format
-aicompanion_data = aichar.export_json(character, "aicompanion")
+aicompanion_json_string = character.export_json("aicompanion")
 # or to file
-aichar.export_json_file(character, "aicompanion", "companion_character_data.json")
+character.export_json_file("aicompanion", "companion_character_data.json")
 
 ```
 Or you can export it in neutral format for those frontends:
 ```py
-neutral_data = aichar.export_character_json(character)
-aichar.export_character_json_file(character, "neutral_character_data.json")
+neutral_json_string = character.export_neutral_json()
+character.export_neutral_json_file("neutral_character_data.json")
 ```
 
 ## License
+2023 Hubert Kasperek
+
 This library is distributed under the MIT License.
