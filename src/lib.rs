@@ -124,8 +124,8 @@ impl CharacterClass {
         character_str.push_str(&format!("Example Messages: \n{}\n", self.example_messages));
 
         match &self.image_path {
-            Some(path) => character_str.push_str(&format!("Image Path: {}\n", path)),
-            None => character_str.push_str("Image Path: None\n"),
+            Some(path) => character_str.push_str(&format!("Image Path: {}", path)),
+            None => character_str.push_str("Image Path: None"),
         }
 
         println!("{}", character_str);
@@ -150,7 +150,7 @@ impl CharacterClass {
             first_mes: &self.greeting_message,
             mes_example: &self.example_messages,
         };
-        Ok(serde_json::to_string(&export_class).expect("Error while serializing JSON"))
+        Ok(serde_json::to_string_pretty(&export_class).expect("Error while serializing JSON"))
     }
 
     fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
