@@ -24,7 +24,6 @@
 
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use base64::{Engine, engine::GeneralPurpose, engine::GeneralPurposeConfig, alphabet::STANDARD};
 use png::Decoder;
 use std::fs::File;
@@ -155,8 +154,8 @@ impl CharacterClass {
 
     fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
         let json_string = self.export_neutral_json()?;
-        let mut file = File::create(export_json_path).expect(&format!("Cannot create file at path: {}", export_json_path));
-        file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
+        let mut file = File::create(export_json_path)?;
+        file.write_all(json_string.as_bytes())?;
         Ok(())
     }
 
@@ -208,7 +207,7 @@ impl CharacterClass {
 
     fn export_json_file(&self, format_type: &str, export_json_path: &str) -> PyResult<()> {
         let json_string = self.export_json(format_type)?;
-        let mut file = File::create(export_json_path).expect(&format!("Cannot create file at path: {}", export_json_path));
+        let mut file = File::create(export_json_path)?;
         file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
         Ok(())
     }
@@ -219,7 +218,7 @@ impl CharacterClass {
     }
 
     fn export_card_file(&self, format_type: &str, export_card_path: &str) -> PyResult<()> {
-        export_as_card(&self, format_type, export_card_path)?;
+        export_as_card(self, format_type, export_card_path)?;
         Ok(())
     }
 }
@@ -345,9 +344,9 @@ fn load_character_json(json: &str) -> PyResult<CharacterClass> {
 
 #[pyfunction]
 fn load_character_json_file(path: &str) -> PyResult<CharacterClass> {
-    let mut file = File::open(path).expect(&format!("Cannot open file at path: {}", path));
+    let mut file = File::open(path)?;
     let mut buf = String::new();
-    file.read_to_string(&mut buf).expect(&format!("Error while reading file at path: {}", path));
+    file.read_to_string(&mut buf)?;
     let char_data: LoadCharacterClass = serde_json::from_str(&buf).expect("Error while parsing json file");
     Ok(CharacterClass {
         name: char_data.char_name.unwrap_or(char_data.name.unwrap_or(String::from(""))),
@@ -362,17 +361,18 @@ fn load_character_json_file(path: &str) -> PyResult<CharacterClass> {
 
 #[pyfunction]
 fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
-    let mut card_file = File::open(path).expect("File at this path does not exist");
-    let mut data = Vec::new();
-    match card_file.read_to_end(&mut data) {
-        Ok(_) => {},
-        Err(e) => {
-            return Err(pyo3::exceptions::PyValueError::new_err(format!("Error while reading character card file: {:?}", e)));
+    let decoder = png::Decoder::new(File::open(path).unwrap());
+    let reader = decoder.read_info().unwrap();
+    let character_base64_option: Option<String> = reader.info().uncompressed_latin1_text.iter()
+        .filter(|text_chunk| text_chunk.keyword == "chara")
+        .map(|text_chunk| text_chunk.text.clone())
+        .next();
+    let character_base64: String = match character_base64_option {
+        Some(v) => v,
+        None => {
+            return Err(pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"));
         }
     };
-    let text_chunk_start = data.windows(9).position(|window| window == b"tEXtchara").expect("Looks like this image does not contain character data");
-    let text_chunk_end = data.windows(4).rposition(|window| window == b"IEND").expect("Looks like this image does not contain character data");
-    let character_base64 = &data[text_chunk_start + 10..text_chunk_end - 8];
     let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
     let character_bytes = match engine.decode(character_base64) {
         Ok(b) => b,
