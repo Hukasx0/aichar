@@ -79,6 +79,24 @@ impl CharacterClass {
         self.image_path.as_ref()
     }
 
+    #[getter]
+    fn data_summary(&self) -> String {
+        let mut character_str = String::new();
+
+        character_str.push_str(&format!("Name: {}\n", self.name));
+        character_str.push_str(&format!("Summary: {}\n", self.summary));
+        character_str.push_str(&format!("Personality: {}\n", self.personality));
+        character_str.push_str(&format!("Scenario: {}\n", self.scenario));
+        character_str.push_str(&format!("Greeting Message: {}\n", self.greeting_message));
+        character_str.push_str(&format!("Example Messages: \n{}\n", self.example_messages));
+
+        match &self.image_path {
+            Some(path) => character_str.push_str(&format!("Image Path: {}", path)),
+            None => character_str.push_str("Image Path: None"),
+        }
+        character_str
+    }
+
     #[setter]
     fn set_name(&mut self, name: &str) {
         self.name = name.to_string();
@@ -112,25 +130,6 @@ impl CharacterClass {
     #[setter]
     fn set_image_path(&mut self, image_path: &str) {
         self.image_path = Some(image_path.to_string());
-    }
-
-    fn print_summary(&self) -> PyResult<()> {
-        let mut character_str = String::new();
-
-        character_str.push_str(&format!("Name: {}\n", self.name));
-        character_str.push_str(&format!("Summary: {}\n", self.summary));
-        character_str.push_str(&format!("Personality: {}\n", self.personality));
-        character_str.push_str(&format!("Scenario: {}\n", self.scenario));
-        character_str.push_str(&format!("Greeting Message: {}\n", self.greeting_message));
-        character_str.push_str(&format!("Example Messages: \n{}\n", self.example_messages));
-
-        match &self.image_path {
-            Some(path) => character_str.push_str(&format!("Image Path: {}", path)),
-            None => character_str.push_str("Image Path: None"),
-        }
-
-        println!("{}", character_str);
-        Ok(())
     }
 
     fn export_neutral_json(&self) -> PyResult<String> {

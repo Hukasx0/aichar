@@ -65,9 +65,9 @@ character.image_path = "New Image Path"
 ```
 
 ### Printing Character Information Summary
-You can print the character's information to the console using the print_summary function:
+You can get character's information summary by using the data_summary attribute:
 ```py
-character.print_summary()
+print(character.data_summary)
 ```
 
 ### Accessing Character Attributes
