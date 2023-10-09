@@ -26,6 +26,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use base64::{Engine, engine::GeneralPurpose, engine::GeneralPurposeConfig, alphabet::STANDARD};
+use png::Decoder;
 use std::fs::File;
 use std::io::{Read, Write};
 
@@ -213,13 +214,49 @@ impl CharacterClass {
         Ok(())
     }
 
-/*                  TODO: Add export method as character cards
-    fn export_character_card_file(&self, export_card_path: &str) -> PyResult<()> {
+    fn export_neutral_card_file(&self, export_card_path: &str) -> PyResult<()> {
+        export_as_card(self, "neutral", export_card_path)?;
+        Ok(())
     }
 
-    fn export_card_file(&self, type: &str, export_card_path: &str) -> PyResult<()> {
+    fn export_card_file(&self, format_type: &str, export_card_path: &str) -> PyResult<()> {
+        export_as_card(&self, format_type, export_card_path)?;
+        Ok(())
     }
-*/
+}
+
+fn export_as_card(character: &CharacterClass, format_type: &str, export_card_path: &str) -> PyResult<()> {
+    let character_image = match &character.image_path {
+        Some(v) => v,
+        None => {
+            return Err(pyo3::exceptions::PyValueError::new_err("To export a character using the character card, you must provide a png file that will hold the encoded data. You can add the image path to the CharacterClass object using the property: .image_path = \"png/file/path\""));
+        }
+    };
+
+    let decoder = Decoder::new(File::open(character_image)?);
+    let mut reader = decoder.read_info().unwrap();
+    let mut buf = vec![0; reader.output_buffer_size()];
+    let info = reader.next_frame(&mut buf).unwrap();
+    let bytes = &buf[..info.buffer_size()];
+
+    let mut encoder = png::Encoder::new(File::create(export_card_path)?, info.width, info.height);
+    encoder.set_color(info.color_type);
+    encoder.set_depth(info.bit_depth);
+    let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
+    let character_base64 = if format_type == "neutral" {
+        engine.encode(character.export_neutral_json()?)
+    } else {
+        engine.encode(character.export_json(format_type)?)
+    };
+
+    encoder.add_text_chunk(
+        "chara".to_string(),
+        character_base64,
+    ).unwrap();
+
+    let mut writer = encoder.write_header().unwrap();
+    writer.write_image_data(bytes).unwrap();
+    Ok(())
 }
 
 #[derive(Serialize)]
