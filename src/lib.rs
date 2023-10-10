@@ -26,8 +26,17 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use base64::{Engine, engine::GeneralPurpose, engine::GeneralPurposeConfig, alphabet::STANDARD};
 use png::Decoder;
+use chrono::Utc;
 use std::fs::File;
 use std::io::{Read, Write};
+
+
+static PROGRAM_INFO: ProgramInfo = ProgramInfo {
+    name: "aichar Python library",
+    version: "0.5.0",
+    url: "https://github.com/Hukasx0/aichar",
+};
+
 
 #[derive(Clone)]
 #[pyclass]
@@ -39,6 +48,7 @@ struct CharacterClass {
     greeting_message: String,
     example_messages: String,
     image_path: Option<String>, 
+    created_time: Option<i64>,
 }
 
 #[pymethods]
@@ -132,6 +142,7 @@ impl CharacterClass {
     }
 
     fn export_neutral_json(&self) -> PyResult<String> {
+        let current_time = Utc::now().timestamp_millis();
         let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
             char_name: &self.name,
             char_persona: if self.personality.is_empty() {
@@ -148,6 +159,17 @@ impl CharacterClass {
             scenario: &self.scenario,
             first_mes: &self.greeting_message,
             mes_example: &self.example_messages,
+            metadata: Metadata {
+                version: 1,
+                created: &self.created_time.unwrap_or(current_time),
+                modified: current_time,
+                source: None,
+                tool: Tooldata {
+                    name: PROGRAM_INFO.name,
+                    version: PROGRAM_INFO.version,
+                    url: PROGRAM_INFO.url,
+                }
+            },
         };
         Ok(serde_json::to_string_pretty(&export_class).expect("Error while serializing JSON"))
     }
@@ -160,6 +182,7 @@ impl CharacterClass {
     }
 
     fn export_neutral_yaml(&self) -> PyResult<String> {
+        let current_time = Utc::now().timestamp_millis();
         let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
             char_name: &self.name,
             char_persona: if self.personality.is_empty() {
@@ -176,6 +199,17 @@ impl CharacterClass {
             scenario: &self.scenario,
             first_mes: &self.greeting_message,
             mes_example: &self.example_messages,
+            metadata: Metadata {
+                version: 1,
+                created: &self.created_time.unwrap_or(current_time),
+                modified: current_time,
+                source: None,
+                tool: Tooldata {
+                    name: PROGRAM_INFO.name,
+                    version: PROGRAM_INFO.version,
+                    url: PROGRAM_INFO.url,
+                }
+            },
         };
         Ok(serde_yaml::to_string(&export_class).expect("Error while serializing YAML"))
     }
@@ -188,6 +222,7 @@ impl CharacterClass {
     }
 
     fn export_json(&self, format_type: &str) -> PyResult<String> {
+        let current_time = Utc::now().timestamp_millis();
         match format_type.to_lowercase().as_str() {
             "tavernai" | "sillytavern" => {
                 let export: ExportTavernAi = ExportTavernAi {
@@ -197,6 +232,17 @@ impl CharacterClass {
                     scenario: &self.scenario,
                     first_mes: &self.greeting_message,
                     mes_example: &self.example_messages,
+                    metadata: Metadata {
+                        version: 1,
+                        created: &self.created_time.unwrap_or(current_time),
+                        modified: current_time,
+                        source: None,
+                        tool: Tooldata {
+                            name: PROGRAM_INFO.name,
+                            version: PROGRAM_INFO.version,
+                            url: PROGRAM_INFO.url,
+                        }
+                    },
                 };
                 Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
             },
@@ -211,6 +257,17 @@ impl CharacterClass {
                     world_scenario: &self.scenario,
                     char_greeting: &self.greeting_message,
                     example_dialogue: &self.example_messages,
+                    metadata: Metadata {
+                        version: 1,
+                        created: &self.created_time.unwrap_or(current_time),
+                        modified: current_time,
+                        source: None,
+                        tool: Tooldata {
+                            name: PROGRAM_INFO.name,
+                            version: PROGRAM_INFO.version,
+                            url: PROGRAM_INFO.url,
+                        }
+                    },
                 };
                 Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
             },
@@ -224,6 +281,17 @@ impl CharacterClass {
                     },
                     first_mes: &self.greeting_message,
                     mes_example: &self.example_messages,
+                    metadata: Metadata {
+                        version: 1,
+                        created: &self.created_time.unwrap_or(current_time),
+                        modified: current_time,
+                        source: None,
+                        tool: Tooldata {
+                            name: PROGRAM_INFO.name,
+                            version: PROGRAM_INFO.version,
+                            url: PROGRAM_INFO.url,
+                        }
+                    },
                 };
                 Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
             },
@@ -241,6 +309,7 @@ impl CharacterClass {
     }
 
     fn export_yaml(&self, format_type: &str) -> PyResult<String> {
+        let current_time = Utc::now().timestamp_millis();
         match format_type.to_lowercase().as_str() {
             "tavernai" | "sillytavern" => {
                 let export: ExportTavernAi = ExportTavernAi {
@@ -250,6 +319,17 @@ impl CharacterClass {
                     scenario: &self.scenario,
                     first_mes: &self.greeting_message,
                     mes_example: &self.example_messages,
+                    metadata: Metadata {
+                        version: 1,
+                        created: &self.created_time.unwrap_or(current_time),
+                        modified: current_time,
+                        source: None,
+                        tool: Tooldata {
+                            name: PROGRAM_INFO.name,
+                            version: PROGRAM_INFO.version,
+                            url: PROGRAM_INFO.url,
+                        }
+                    },
                 };
                 Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
             },
@@ -264,6 +344,17 @@ impl CharacterClass {
                     world_scenario: &self.scenario,
                     char_greeting: &self.greeting_message,
                     example_dialogue: &self.example_messages,
+                    metadata: Metadata {
+                        version: 1,
+                        created: &self.created_time.unwrap_or(current_time),
+                        modified: current_time,
+                        source: None,
+                        tool: Tooldata {
+                            name: PROGRAM_INFO.name,
+                            version: PROGRAM_INFO.version,
+                            url: PROGRAM_INFO.url,
+                        }
+                    },
                 };
                 Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
             },
@@ -277,6 +368,17 @@ impl CharacterClass {
                     },
                     first_mes: &self.greeting_message,
                     mes_example: &self.example_messages,
+                    metadata: Metadata {
+                        version: 1,
+                        created: &self.created_time.unwrap_or(current_time),
+                        modified: current_time,
+                        source: None,
+                        tool: Tooldata {
+                            name: PROGRAM_INFO.name,
+                            version: PROGRAM_INFO.version,
+                            url: PROGRAM_INFO.url,
+                        }
+                    },
                 };
                 Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
             },
@@ -338,6 +440,28 @@ fn export_as_card(character: &CharacterClass, format_type: &str, export_card_pat
     Ok(())
 }
 
+struct ProgramInfo {
+    name: &'static str,
+    version: &'static str,
+    url: &'static str,
+}
+
+#[derive(Serialize)]
+struct Metadata<'a> {
+    version: u32,
+    created: &'a i64,
+    modified: i64,
+    source: Option<String>,
+    tool: Tooldata<'a>,
+}
+
+#[derive(Serialize)]
+struct Tooldata<'a> {
+    name: &'a str,
+    version: &'a str,
+    url: &'a str,
+}
+
 #[derive(Serialize)]
 struct ExportAllCharacterClass<'a> {
     char_name: &'a str,
@@ -351,6 +475,7 @@ struct ExportAllCharacterClass<'a> {
     scenario: &'a str,
     first_mes: &'a str,
     mes_example: &'a str,
+    metadata: Metadata<'a>,
 }
 
 #[derive(Deserialize)]
@@ -367,6 +492,12 @@ struct LoadCharacterClass {
     scenario: Option<String>,
     first_mes: Option<String>,
     mes_example: Option<String>,
+    metadata: Option<TimeMetadata>
+}
+
+#[derive(Deserialize)]
+struct TimeMetadata {
+    created: Option<i64>,
 }
 
 #[derive(Serialize)]
@@ -377,6 +508,7 @@ struct ExportTavernAi<'a> {
     scenario: &'a str,
     first_mes: &'a str,
     mes_example: &'a str,
+    metadata: Metadata<'a>,
 }
 
 #[derive(Serialize)]
@@ -386,6 +518,7 @@ struct ExportTextGenerationWebuiPygmalion<'a> {
     world_scenario: &'a str,
     char_greeting: &'a str,
     example_dialogue: &'a str,
+    metadata: Metadata<'a>,
 }
 
 #[derive(Serialize)]
@@ -394,6 +527,7 @@ struct ExportAiCompanion<'a> {
     description: &'a str,
     first_mes: &'a str,
     mes_example: &'a str,
+    metadata: Metadata<'a>,
 }
 
 #[pyfunction]
@@ -406,6 +540,7 @@ fn create_character(name: &str, summary: &str, personality: &str, scenario: &str
         greeting_message: greeting_message.to_string(),
         example_messages: example_messages.to_string(),
         image_path: Some(image_path.to_string()),
+        created_time: None,
     })
 }
 
@@ -420,6 +555,7 @@ fn load_character_json(json: &str) -> PyResult<CharacterClass> {
         greeting_message: char_data.char_greeting.unwrap_or(char_data.first_mes.unwrap_or(String::from(""))),
         example_messages: char_data.example_dialogue.unwrap_or(char_data.mes_example.unwrap_or(String::from(""))),
         image_path: None,
+        created_time: char_data.metadata.and_then(|time_metadata| time_metadata.created),
     })
 }
 
@@ -442,6 +578,7 @@ fn load_character_yaml(json: &str) -> PyResult<CharacterClass> {
         greeting_message: char_data.char_greeting.unwrap_or(char_data.first_mes.unwrap_or(String::from(""))),
         example_messages: char_data.example_dialogue.unwrap_or(char_data.mes_example.unwrap_or(String::from(""))),
         image_path: None,
+        created_time: char_data.metadata.and_then(|time_metadata| time_metadata.created),
     })
 }
 
@@ -489,6 +626,7 @@ fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
         greeting_message: char_data.char_greeting.unwrap_or(char_data.first_mes.unwrap_or(String::from(""))),
         example_messages: char_data.example_dialogue.unwrap_or(char_data.mes_example.unwrap_or(String::from(""))),
         image_path: None,
+        created_time: char_data.metadata.and_then(|time_metadata| time_metadata.created),
     })
 }
 
