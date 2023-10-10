@@ -1,9 +1,9 @@
 # Aichar
 [![PyPI version](https://badge.fury.io/py/aichar.svg)](https://badge.fury.io/py/aichar)
 
-Python library for creating/transporting AI characters between different frontends ([TavernAI](https://github.com/TavernAI/TavernAI), [SillyTavern](https://github.com/SillyTavern/SillyTavern), [TextGenerationWebUI](https://github.com/oobabooga/text-generation-webui), [AI-companion](https://github.com/Hukasx0/ai-companion), Pygmalion) 
+Python library for creating/editing/transporting AI characters between different frontends ([TavernAI](https://github.com/TavernAI/TavernAI), [SillyTavern](https://github.com/SillyTavern/SillyTavern), [TextGenerationWebUI](https://github.com/oobabooga/text-generation-webui), [AI-companion](https://github.com/Hukasx0/ai-companion), Pygmalion) 
 
-This library allows you to read JSON and character card files, edit their data, create your characters from scratch and export them as JSON or character cards compatible with the frontends mentioned above
+This library allows you to read JSON, Yaml and character card files, edit their data, create your characters from scratch and export them as JSON, Yaml or character cards compatible with the frontends mentioned above
 ## Installation
 ```py
 pip install aichar
@@ -39,6 +39,16 @@ character = aichar.load_character_json_file("character.json")
 ### Loading a Character data from a JSON String
 ```py
 character = aichar.load_character_json('{"char_name": "Character Name", "char_persona": "Character Personality", "world_scenario": "Character Scenario", "char_greeting": "Character Greeting Message", "example_dialogue": "Character Example Messages", "name": "Character Name", "description": "Character Summary", "personality": "Character Personality", "scenario": "Character Scenario", "first_mes": "Character Greeting Message", "mes_example": "Character Example Messages"}')
+```
+
+### Loading a Character data from a Yaml File
+```py
+character = aichar.load_character_yaml_file("character.yaml")
+```
+
+### Loading a Character data from a Yaml String
+```py
+character = aichar.load_character_yaml('char_name: Character Name\nchar_persona: Character Personality\nworld_scenario: Character Scenario\nchar_greeting: Character Greeting Message\nexample_dialogue: Character Example Messages\nname: Character Name\ndescription: Character Summary\npersonality: Character Personality\nscenario: Character Scenario\nfirst_mes: Character Greeting Message\nmes_example: Character Example Messages\nmetadata:\n  version: 1\n  created: 1696945481977\n  modified: 1696945481977\n  source: null\n  tool:\n    name: aichar Python library\n    version: 0.5.0\n    url: https://github.com/Hukasx0/aichar\n')
 ```
 
 ### Modifying Character Attributes
@@ -85,7 +95,7 @@ image_path = character.image_path
 ```
 
 ### Exporting Character Data
-You can export the character's data in different formats using the export_card_file, export_json and export_json_file function. Supported export formats include "tavernai" (or "sillytavern"), "textgenerationwebui" (or "pygmalion"), and "aicompanion". 
+You can export the character's data in different formats using the export_card_file, export_json, export_json_file, export_yaml and export_yaml_file function. Supported export formats include "tavernai" (or "sillytavern"), "textgenerationwebui" (or "pygmalion"), and "aicompanion". 
 
 exporting data as character card png:
 ```py
@@ -131,12 +141,42 @@ character.export_json_file("pygmalion", "pygmalion_character_data.json")
 aicompanion_json_string = character.export_json("aicompanion")
 # or to file
 character.export_json_file("aicompanion", "companion_character_data.json")
-
 ```
+
+exporting data as yaml string or file:
+```py
+# Export character data in "tavernai" format
+tavernai_yaml_string = character.export_yaml("tavernai")
+# or to file
+character.export_yaml_file("tavernai", "tavernai_character_data.yml")
+
+# Export character data in "sillytavern" format
+sillytavern_yaml_string = character.export_yaml("sillytavern")
+# or to file
+character.export_yaml_file("sillytavern", "sillytavern_character_data.yml")
+
+# Export character data in "textgenerationwebui" format
+textgenerationwebui_yaml_string = character.export_yaml("textgenerationwebui")
+# or to file
+character.export_yaml_file("textgenerationwebui", "textgenerationwebui_character_data.yml")
+
+# Export character data in "pygmalion" format
+pygmalion_yaml_string = character.export_yaml("pygmalion")
+# or to file
+character.export_yaml_file("pygmalion", "pygmalion_character_data.yml")
+
+# Export character data in "aicompanion" format
+aicompanion_yaml_string = character.export_yaml("aicompanion")
+# or to file
+character.export_yaml_file("aicompanion", "companion_character_data.yml")
+```
+
 Or you can export it in neutral format for those frontends:
 ```py
 neutral_json_string = character.export_neutral_json()
+neutral_yaml_string = character.export_neutral_yaml()
 character.export_neutral_json_file("neutral_character_data.json")
+character.export_neutral_yaml_file("neutral_character_data.yml")
 character.export_neutral_card_file("neutral_card_name.png")
 ```
 
