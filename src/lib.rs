@@ -159,6 +159,34 @@ impl CharacterClass {
         Ok(())
     }
 
+    fn export_neutral_yaml(&self) -> PyResult<String> {
+        let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
+            char_name: &self.name,
+            char_persona: if self.personality.is_empty() {
+                &self.summary
+            } else {
+                &self.personality
+            },
+            world_scenario: &self.scenario,
+            char_greeting: &self.greeting_message,
+            example_dialogue: &self.example_messages,
+            name: &self.name,
+            description: &self.summary,
+            personality: &self.personality,
+            scenario: &self.scenario,
+            first_mes: &self.greeting_message,
+            mes_example: &self.example_messages,
+        };
+        Ok(serde_yaml::to_string(&export_class).expect("Error while serializing YAML"))
+    }
+
+    fn export_neutral_yaml_file(&self, export_yaml_path: &str) -> PyResult<()> {
+        let yaml_string = self.export_neutral_yaml()?;
+        let mut file = File::create(export_yaml_path)?;
+        file.write_all(yaml_string.as_bytes())?;
+        Ok(())
+    }
+
     fn export_json(&self, format_type: &str) -> PyResult<String> {
         match format_type.to_lowercase().as_str() {
             "tavernai" | "sillytavern" => {
@@ -209,6 +237,59 @@ impl CharacterClass {
         let json_string = self.export_json(format_type)?;
         let mut file = File::create(export_json_path)?;
         file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
+        Ok(())
+    }
+
+    fn export_yaml(&self, format_type: &str) -> PyResult<String> {
+        match format_type.to_lowercase().as_str() {
+            "tavernai" | "sillytavern" => {
+                let export: ExportTavernAi = ExportTavernAi {
+                    name: &self.name,
+                    description: &self.summary,
+                    personality: &self.personality,
+                    scenario: &self.scenario,
+                    first_mes: &self.greeting_message,
+                    mes_example: &self.example_messages,
+                };
+                Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
+            },
+            "textgenerationwebui" | "pygmalion" => {
+                let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
+                    char_name: &self.name,
+                    char_persona: if self.personality.is_empty() {
+                        &self.summary
+                    } else {
+                        &self.personality
+                    },
+                    world_scenario: &self.scenario,
+                    char_greeting: &self.greeting_message,
+                    example_dialogue: &self.example_messages,
+                };
+                Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
+            },
+            "aicompanion" => {
+                let export: ExportAiCompanion = ExportAiCompanion {
+                    name: &self.name,
+                    description: if self.personality.is_empty() {
+                        &self.summary
+                    } else {
+                        &self.personality
+                    },
+                    first_mes: &self.greeting_message,
+                    mes_example: &self.example_messages,
+                };
+                Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
+            },
+            _ => {
+                Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"))
+            }
+        }
+    }
+
+    fn export_yaml_file(&self, format_type: &str, export_yaml_path: &str) -> PyResult<()> {
+        let yaml_string = self.export_yaml(format_type)?;
+        let mut file = File::create(export_yaml_path)?;
+        file.write_all(yaml_string.as_bytes()).expect("Error while writing to yaml file");
         Ok(())
     }
 
@@ -347,7 +428,12 @@ fn load_character_json_file(path: &str) -> PyResult<CharacterClass> {
     let mut file = File::open(path)?;
     let mut buf = String::new();
     file.read_to_string(&mut buf)?;
-    let char_data: LoadCharacterClass = serde_json::from_str(&buf).expect("Error while parsing json file");
+    load_character_json(&buf)
+}
+
+#[pyfunction]
+fn load_character_yaml(json: &str) -> PyResult<CharacterClass> {
+    let char_data: LoadCharacterClass = serde_yaml::from_str(json).expect("Error while parsing yaml string");
     Ok(CharacterClass {
         name: char_data.char_name.unwrap_or(char_data.name.unwrap_or(String::from(""))),
         summary: char_data.summary.unwrap_or(char_data.description.unwrap_or(String::from(""))),
@@ -357,6 +443,14 @@ fn load_character_json_file(path: &str) -> PyResult<CharacterClass> {
         example_messages: char_data.example_dialogue.unwrap_or(char_data.mes_example.unwrap_or(String::from(""))),
         image_path: None,
     })
+}
+
+#[pyfunction]
+fn load_character_yaml_file(path: &str) -> PyResult<CharacterClass> {
+    let mut file = File::open(path)?;
+    let mut buf = String::new();
+    file.read_to_string(&mut buf)?;
+    load_character_yaml(&buf)
 }
 
 #[pyfunction]
@@ -403,6 +497,8 @@ fn aichar(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(create_character, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_json, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_json_file, m)?)?;
+    m.add_function(wrap_pyfunction!(load_character_yaml, m)?)?;
+    m.add_function(wrap_pyfunction!(load_character_yaml_file, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_card_file, m)?)?;
     Ok(())
 }
