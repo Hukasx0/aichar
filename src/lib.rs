@@ -33,7 +33,7 @@ use std::io::{Read, Write};
 
 static PROGRAM_INFO: ProgramInfo = ProgramInfo {
     name: "aichar Python library",
-    version: "0.5.0",
+    version: "0.5.1",
     url: "https://github.com/Hukasx0/aichar",
 };
 
@@ -592,18 +592,22 @@ fn load_character_yaml_file(path: &str) -> PyResult<CharacterClass> {
 
 #[pyfunction]
 fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
-    let decoder = png::Decoder::new(File::open(path).unwrap());
+    let decoder = png::Decoder::new(File::open(path)?);
     let reader = decoder.read_info().unwrap();
     let character_base64_option: Option<String> = reader.info().uncompressed_latin1_text.iter()
         .filter(|text_chunk| text_chunk.keyword == "chara")
         .map(|text_chunk| text_chunk.text.clone())
         .next();
-    let character_base64: String = match character_base64_option {
-        Some(v) => v,
-        None => {
-            return Err(pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"));
-        }
-    };
+        let character_base64: String = match character_base64_option {
+            Some(v) => v,
+            None => {
+                let mut f_buffer = Vec::new();
+                File::open(path)?.read_to_end(&mut f_buffer)?;
+                let text_chunk_start = f_buffer.windows(9).position(|window| window == b"tEXtchara").ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?;
+                let text_chunk_end = f_buffer.windows(4).rposition(|window| window == b"IEND").ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?;
+                String::from_utf8_lossy(&f_buffer[text_chunk_start + 10..text_chunk_end - 8]).to_string()
+            }
+        };
     let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
     let character_bytes = match engine.decode(character_base64) {
         Ok(b) => b,
