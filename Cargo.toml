@@ -13,6 +13,6 @@ pyo3 = "0.19.0"
 serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.108"
 serde_yaml = "0.9.25"
-base64 = "0.21.4"
+base64 = "0.21.5"
 png = "0.17.10"
 chrono = "0.4.31"
