@@ -395,18 +395,30 @@ impl CharacterClass {
         Ok(())
     }
 
+    fn export_neutral_card(&self) -> PyResult<Vec<u8>> {
+        Ok(export_as_card(self, "neutral")?)
+    }
+
+    fn export_card(&self, format_type: &str) -> PyResult<Vec<u8>> {
+        Ok(export_as_card(self, &format_type)?)
+    }
+
     fn export_neutral_card_file(&self, export_card_path: &str) -> PyResult<()> {
-        export_as_card(self, "neutral", export_card_path)?;
+        let bytes = export_as_card(self, "neutral")?;
+        let mut file = File::create(export_card_path)?;
+        file.write_all(&bytes)?;
         Ok(())
     }
 
     fn export_card_file(&self, format_type: &str, export_card_path: &str) -> PyResult<()> {
-        export_as_card(self, format_type, export_card_path)?;
+        let bytes = export_as_card(self, format_type)?;
+        let mut file = File::create(export_card_path)?;
+        file.write_all(&bytes)?;
         Ok(())
     }
 }
 
-fn export_as_card(character: &CharacterClass, format_type: &str, export_card_path: &str) -> PyResult<()> {
+fn export_as_card(character: &CharacterClass, format_type: &str) -> PyResult<Vec<u8>> {
     let character_image = match &character.image_path {
         Some(v) => v,
         None => {
@@ -420,24 +432,27 @@ fn export_as_card(character: &CharacterClass, format_type: &str, export_card_pat
     let info = reader.next_frame(&mut buf).unwrap();
     let bytes = &buf[..info.buffer_size()];
 
-    let mut encoder = png::Encoder::new(File::create(export_card_path)?, info.width, info.height);
-    encoder.set_color(info.color_type);
-    encoder.set_depth(info.bit_depth);
-    let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
-    let character_base64 = if format_type == "neutral" {
-        engine.encode(character.export_neutral_json()?)
-    } else {
-        engine.encode(character.export_json(format_type)?)
-    };
+    let mut encoded_data = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut encoded_data, info.width, info.height);
+        encoder.set_color(info.color_type);
+        encoder.set_depth(info.bit_depth);
+        let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
+        let character_base64 = if format_type == "neutral" {
+            engine.encode(character.export_neutral_json()?)
+        } else {
+            engine.encode(character.export_json(format_type)?)
+        };
 
-    encoder.add_text_chunk(
-        "chara".to_string(),
-        character_base64,
-    ).unwrap();
+        encoder.add_text_chunk(
+            "chara".to_string(),
+            character_base64,
+        ).unwrap();
+        let mut writer = encoder.write_header().unwrap();
+        writer.write_image_data(bytes).unwrap();
+    }
 
-    let mut writer = encoder.write_header().unwrap();
-    writer.write_image_data(bytes).unwrap();
-    Ok(())
+    Ok(encoded_data)
 }
 
 struct ProgramInfo {
