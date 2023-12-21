@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2023 Hubert Kasperek
+    Copyright (c) 2023-2024 Hubert Kasperek
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -141,266 +141,63 @@ impl CharacterClass {
         self.image_path = Some(image_path.to_string());
     }
 
-    fn export_neutral_json(&self) -> PyResult<String> {
-        let current_time = Utc::now().timestamp_millis();
-        let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
-            char_name: &self.name,
-            char_persona: if self.personality.is_empty() {
-                &self.summary
-            } else {
-                &self.personality
-            },
-            world_scenario: &self.scenario,
-            char_greeting: &self.greeting_message,
-            example_dialogue: &self.example_messages,
-            name: &self.name,
-            description: &self.summary,
-            personality: &self.personality,
-            scenario: &self.scenario,
-            first_mes: &self.greeting_message,
-            mes_example: &self.example_messages,
-            metadata: Metadata {
-                version: 1,
-                created: &self.created_time.unwrap_or(current_time),
-                modified: current_time,
-                source: None,
-                tool: Tooldata {
-                    name: PROGRAM_INFO.name,
-                    version: PROGRAM_INFO.version,
-                    url: PROGRAM_INFO.url,
-                }
-            },
-        };
-        Ok(serde_json::to_string_pretty(&export_class).expect("Error while serializing JSON"))
-    }
-
-    fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
-        let json_string = self.export_neutral_json()?;
-        let mut file = File::create(export_json_path)?;
-        file.write_all(json_string.as_bytes())?;
-        Ok(())
-    }
-
-    fn export_neutral_yaml(&self) -> PyResult<String> {
-        let current_time = Utc::now().timestamp_millis();
-        let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
-            char_name: &self.name,
-            char_persona: if self.personality.is_empty() {
-                &self.summary
-            } else {
-                &self.personality
-            },
-            world_scenario: &self.scenario,
-            char_greeting: &self.greeting_message,
-            example_dialogue: &self.example_messages,
-            name: &self.name,
-            description: &self.summary,
-            personality: &self.personality,
-            scenario: &self.scenario,
-            first_mes: &self.greeting_message,
-            mes_example: &self.example_messages,
-            metadata: Metadata {
-                version: 1,
-                created: &self.created_time.unwrap_or(current_time),
-                modified: current_time,
-                source: None,
-                tool: Tooldata {
-                    name: PROGRAM_INFO.name,
-                    version: PROGRAM_INFO.version,
-                    url: PROGRAM_INFO.url,
-                }
-            },
-        };
-        Ok(serde_yaml::to_string(&export_class).expect("Error while serializing YAML"))
-    }
-
-    fn export_neutral_yaml_file(&self, export_yaml_path: &str) -> PyResult<()> {
-        let yaml_string = self.export_neutral_yaml()?;
-        let mut file = File::create(export_yaml_path)?;
-        file.write_all(yaml_string.as_bytes())?;
-        Ok(())
-    }
-
     fn export_json(&self, format_type: &str) -> PyResult<String> {
-        let current_time = Utc::now().timestamp_millis();
-        match format_type.to_lowercase().as_str() {
-            "tavernai" | "sillytavern" => {
-                let export: ExportTavernAi = ExportTavernAi {
-                    name: &self.name,
-                    description: &self.summary,
-                    personality: &self.personality,
-                    scenario: &self.scenario,
-                    first_mes: &self.greeting_message,
-                    mes_example: &self.example_messages,
-                    metadata: Metadata {
-                        version: 1,
-                        created: &self.created_time.unwrap_or(current_time),
-                        modified: current_time,
-                        source: None,
-                        tool: Tooldata {
-                            name: PROGRAM_INFO.name,
-                            version: PROGRAM_INFO.version,
-                            url: PROGRAM_INFO.url,
-                        }
-                    },
-                };
-                Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
-            },
-            "textgenerationwebui" | "pygmalion" => {
-                let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
-                    char_name: &self.name,
-                    char_persona: if self.personality.is_empty() {
-                        &self.summary
-                    } else {
-                        &self.personality
-                    },
-                    world_scenario: &self.scenario,
-                    char_greeting: &self.greeting_message,
-                    example_dialogue: &self.example_messages,
-                    metadata: Metadata {
-                        version: 1,
-                        created: &self.created_time.unwrap_or(current_time),
-                        modified: current_time,
-                        source: None,
-                        tool: Tooldata {
-                            name: PROGRAM_INFO.name,
-                            version: PROGRAM_INFO.version,
-                            url: PROGRAM_INFO.url,
-                        }
-                    },
-                };
-                Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
-            },
-            "aicompanion" => {
-                let export: ExportAiCompanion = ExportAiCompanion {
-                    name: &self.name,
-                    description: if self.personality.is_empty() {
-                        &self.summary
-                    } else {
-                        &self.personality
-                    },
-                    first_mes: &self.greeting_message,
-                    mes_example: &self.example_messages,
-                    metadata: Metadata {
-                        version: 1,
-                        created: &self.created_time.unwrap_or(current_time),
-                        modified: current_time,
-                        source: None,
-                        tool: Tooldata {
-                            name: PROGRAM_INFO.name,
-                            version: PROGRAM_INFO.version,
-                            url: PROGRAM_INFO.url,
-                        }
-                    },
-                };
-                Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
-            },
-            _ => {
-                Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"))
-            }
-        }
+        Ok(export_as_json(self, format_type)?)
     }
 
     fn export_json_file(&self, format_type: &str, export_json_path: &str) -> PyResult<()> {
-        let json_string = self.export_json(format_type)?;
+        let json_string = export_as_json(self, format_type)?;
         let mut file = File::create(export_json_path)?;
         file.write_all(json_string.as_bytes()).expect("Error while writing to json file");
         Ok(())
     }
 
+    fn export_neutral_json(&self) -> PyResult<String> {
+        Ok(export_as_json(self, "neutral")?)
+    }
+
+    fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
+        let json_string = export_as_json(self, "neutral")?;
+        let mut file = File::create(export_json_path)?;
+        file.write_all(json_string.as_bytes())?;
+        Ok(())
+    }
+
     fn export_yaml(&self, format_type: &str) -> PyResult<String> {
-        let current_time = Utc::now().timestamp_millis();
-        match format_type.to_lowercase().as_str() {
-            "tavernai" | "sillytavern" => {
-                let export: ExportTavernAi = ExportTavernAi {
-                    name: &self.name,
-                    description: &self.summary,
-                    personality: &self.personality,
-                    scenario: &self.scenario,
-                    first_mes: &self.greeting_message,
-                    mes_example: &self.example_messages,
-                    metadata: Metadata {
-                        version: 1,
-                        created: &self.created_time.unwrap_or(current_time),
-                        modified: current_time,
-                        source: None,
-                        tool: Tooldata {
-                            name: PROGRAM_INFO.name,
-                            version: PROGRAM_INFO.version,
-                            url: PROGRAM_INFO.url,
-                        }
-                    },
-                };
-                Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
-            },
-            "textgenerationwebui" | "pygmalion" => {
-                let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
-                    char_name: &self.name,
-                    char_persona: if self.personality.is_empty() {
-                        &self.summary
-                    } else {
-                        &self.personality
-                    },
-                    world_scenario: &self.scenario,
-                    char_greeting: &self.greeting_message,
-                    example_dialogue: &self.example_messages,
-                    metadata: Metadata {
-                        version: 1,
-                        created: &self.created_time.unwrap_or(current_time),
-                        modified: current_time,
-                        source: None,
-                        tool: Tooldata {
-                            name: PROGRAM_INFO.name,
-                            version: PROGRAM_INFO.version,
-                            url: PROGRAM_INFO.url,
-                        }
-                    },
-                };
-                Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
-            },
-            "aicompanion" => {
-                let export: ExportAiCompanion = ExportAiCompanion {
-                    name: &self.name,
-                    description: if self.personality.is_empty() {
-                        &self.summary
-                    } else {
-                        &self.personality
-                    },
-                    first_mes: &self.greeting_message,
-                    mes_example: &self.example_messages,
-                    metadata: Metadata {
-                        version: 1,
-                        created: &self.created_time.unwrap_or(current_time),
-                        modified: current_time,
-                        source: None,
-                        tool: Tooldata {
-                            name: PROGRAM_INFO.name,
-                            version: PROGRAM_INFO.version,
-                            url: PROGRAM_INFO.url,
-                        }
-                    },
-                };
-                Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
-            },
-            _ => {
-                Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"))
-            }
-        }
+        Ok(export_as_yaml(&self, format_type)?)
     }
 
     fn export_yaml_file(&self, format_type: &str, export_yaml_path: &str) -> PyResult<()> {
-        let yaml_string = self.export_yaml(format_type)?;
+        let yaml_string = export_as_yaml(self, format_type)?;
         let mut file = File::create(export_yaml_path)?;
         file.write_all(yaml_string.as_bytes()).expect("Error while writing to yaml file");
         Ok(())
     }
 
-    fn export_neutral_card(&self) -> PyResult<Vec<u8>> {
-        Ok(export_as_card(self, "neutral")?)
+    fn export_neutral_yaml(&self) -> PyResult<String> {
+        Ok(export_as_yaml(self, "neutral")?)
+    }
+
+    fn export_neutral_yaml_file(&self, export_yaml_path: &str) -> PyResult<()> {
+        let yaml_string = export_as_yaml(self, "neutral")?;
+        let mut file = File::create(export_yaml_path)?;
+        file.write_all(yaml_string.as_bytes())?;
+        Ok(())
     }
 
     fn export_card(&self, format_type: &str) -> PyResult<Vec<u8>> {
         Ok(export_as_card(self, &format_type)?)
+    }
+
+    fn export_card_file(&self, format_type: &str, export_card_path: &str) -> PyResult<()> {
+        let bytes = export_as_card(self, format_type)?;
+        let mut file = File::create(export_card_path)?;
+        file.write_all(&bytes)?;
+        Ok(())
+    }
+
+    fn export_neutral_card(&self) -> PyResult<Vec<u8>> {
+        Ok(export_as_card(self, "neutral")?)
     }
 
     fn export_neutral_card_file(&self, export_card_path: &str) -> PyResult<()> {
@@ -410,11 +207,165 @@ impl CharacterClass {
         Ok(())
     }
 
-    fn export_card_file(&self, format_type: &str, export_card_path: &str) -> PyResult<()> {
-        let bytes = export_as_card(self, format_type)?;
-        let mut file = File::create(export_card_path)?;
-        file.write_all(&bytes)?;
-        Ok(())
+}
+
+fn export_as_yaml(character: &CharacterClass, format_type: &str) -> PyResult<String> {
+    let current_time = Utc::now().timestamp_millis();
+    match format_type.to_lowercase().as_str() {
+        "tavernai" | "sillytavern" => {
+            let export: ExportTavernAi = ExportTavernAi {
+                name: &character.name,
+                description: &character.summary,
+                personality: &character.personality,
+                scenario: &character.scenario,
+                first_mes: &character.greeting_message,
+                mes_example: &character.example_messages,
+                metadata: Metadata {
+                    version: 1,
+                    created: &character.created_time.unwrap_or(current_time),
+                    modified: current_time,
+                    source: None,
+                    tool: Tooldata {
+                        name: PROGRAM_INFO.name,
+                        version: PROGRAM_INFO.version,
+                        url: PROGRAM_INFO.url,
+                    }
+                },
+            };
+            Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
+        },
+        "textgenerationwebui" | "pygmalion" => {
+            let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
+                char_name: &character.name,
+                char_persona: if character.personality.is_empty() {
+                    &character.summary
+                } else {
+                    &character.personality
+                },
+                world_scenario: &character.scenario,
+                char_greeting: &character.greeting_message,
+                example_dialogue: &character.example_messages,
+                metadata: Metadata {
+                    version: 1,
+                    created: &character.created_time.unwrap_or(current_time),
+                    modified: current_time,
+                    source: None,
+                    tool: Tooldata {
+                        name: PROGRAM_INFO.name,
+                        version: PROGRAM_INFO.version,
+                        url: PROGRAM_INFO.url,
+                    }
+                },
+            };
+            Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
+        },
+        "aicompanion" => {
+            let export: ExportAiCompanion = ExportAiCompanion {
+                name: &character.name,
+                description: if character.personality.is_empty() {
+                    &character.summary
+                } else {
+                    &character.personality
+                },
+                first_mes: &character.greeting_message,
+                mes_example: &character.example_messages,
+                metadata: Metadata {
+                    version: 1,
+                    created: &character.created_time.unwrap_or(current_time),
+                    modified: current_time,
+                    source: None,
+                    tool: Tooldata {
+                        name: PROGRAM_INFO.name,
+                        version: PROGRAM_INFO.version,
+                        url: PROGRAM_INFO.url,
+                    }
+                },
+            };
+            Ok(serde_yaml::to_string(&export).expect("Error while serializing YAML"))
+        },
+        _ => {
+            Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"))
+        }
+    }
+}
+
+fn export_as_json(character: &CharacterClass, format_type: &str) -> PyResult<String> {
+    let current_time = Utc::now().timestamp_millis();
+    match format_type.to_lowercase().as_str() {
+        "tavernai" | "sillytavern" => {
+            let export: ExportTavernAi = ExportTavernAi {
+                name: &character.name,
+                description: &character.summary,
+                personality: &character.personality,
+                scenario: &character.scenario,
+                first_mes: &character.greeting_message,
+                mes_example: &character.example_messages,
+                metadata: Metadata {
+                    version: 1,
+                    created: &character.created_time.unwrap_or(current_time),
+                    modified: current_time,
+                    source: None,
+                    tool: Tooldata {
+                        name: PROGRAM_INFO.name,
+                        version: PROGRAM_INFO.version,
+                        url: PROGRAM_INFO.url,
+                    }
+                },
+            };
+            Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
+        },
+        "textgenerationwebui" | "pygmalion" => {
+            let export: ExportTextGenerationWebuiPygmalion = ExportTextGenerationWebuiPygmalion {
+                char_name: &character.name,
+                char_persona: if character.personality.is_empty() {
+                    &character.summary
+                } else {
+                    &character.personality
+                },
+                world_scenario: &character.scenario,
+                char_greeting: &character.greeting_message,
+                example_dialogue: &character.example_messages,
+                metadata: Metadata {
+                    version: 1,
+                    created: &character.created_time.unwrap_or(current_time),
+                    modified: current_time,
+                    source: None,
+                    tool: Tooldata {
+                        name: PROGRAM_INFO.name,
+                        version: PROGRAM_INFO.version,
+                        url: PROGRAM_INFO.url,
+                    }
+                },
+            };
+            Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
+        },
+        "aicompanion" => {
+            let export: ExportAiCompanion = ExportAiCompanion {
+                name: &character.name,
+                description: if character.personality.is_empty() {
+                    &character.summary
+                } else {
+                    &character.personality
+                },
+                first_mes: &character.greeting_message,
+                mes_example: &character.example_messages,
+                metadata: Metadata {
+                    version: 1,
+                    created: &character.created_time.unwrap_or(current_time),
+                    modified: current_time,
+                    source: None,
+                    tool: Tooldata {
+                        name: PROGRAM_INFO.name,
+                        version: PROGRAM_INFO.version,
+                        url: PROGRAM_INFO.url,
+                    }
+                },
+            };
+            Ok(serde_json::to_string_pretty(&export).expect("Error while serializing JSON"))
+        },
+        _ => {
+            Err(pyo3::exceptions::PyValueError::new_err("Format not supported, supported formats: 'tavernai', 'sillytavern', 'textgenerationwebui', 'pygmalion', 'aicompanion'"))
+        }
     }
 }
 
@@ -699,6 +650,33 @@ fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
     })
 }
 
+#[pyfunction]
+fn license() -> &'static str {
+    r#"
+    MIT License
+
+    Copyright (c) 2023-2024 Hubert Kasperek
+    
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+    
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+    
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    "#
+}
+
 #[pymodule]
 fn aichar(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(create_character, m)?)?;
@@ -708,5 +686,6 @@ fn aichar(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(load_character_yaml_file, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_card, m)?)?;
     m.add_function(wrap_pyfunction!(load_character_card_file, m)?)?;
+    m.add_function(wrap_pyfunction!(license, m)?)?;
     Ok(())
 }

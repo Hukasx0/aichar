@@ -182,6 +182,6 @@ character.export_neutral_card_file("neutral_card_name.png")
 ```
 
 ## License
-2023 Hubert Kasperek
+2023-2024 Hubert Kasperek
 
 This library is distributed under the MIT License.
