@@ -33,7 +33,7 @@ use std::io::{Read, Write, Cursor};
 
 static PROGRAM_INFO: ProgramInfo = ProgramInfo {
     name: "aichar Python library",
-    version: "0.5.1",
+    version: "1.0.0",
     url: "https://github.com/Hukasx0/aichar",
 };
 
@@ -153,11 +153,11 @@ impl CharacterClass {
     }
 
     fn export_neutral_json(&self) -> PyResult<String> {
-        Ok(export_as_json(self, "neutral")?)
+        Ok(export_as_neutral_json(self)?)
     }
 
     fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
-        let json_string = export_as_json(self, "neutral")?;
+        let json_string = export_as_neutral_json(self)?;
         let mut file = File::create(export_json_path)?;
         file.write_all(json_string.as_bytes())?;
         Ok(())
@@ -206,7 +206,6 @@ impl CharacterClass {
         file.write_all(&bytes)?;
         Ok(())
     }
-
 }
 
 fn export_as_yaml(character: &CharacterClass, format_type: &str) -> PyResult<String> {
