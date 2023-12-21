@@ -175,11 +175,11 @@ impl CharacterClass {
     }
 
     fn export_neutral_yaml(&self) -> PyResult<String> {
-        Ok(export_as_yaml(self, "neutral")?)
+        Ok(export_as_neutral_yaml(self)?)
     }
 
     fn export_neutral_yaml_file(&self, export_yaml_path: &str) -> PyResult<()> {
-        let yaml_string = export_as_yaml(self, "neutral")?;
+        let yaml_string = export_as_neutral_yaml(self)?;
         let mut file = File::create(export_yaml_path)?;
         file.write_all(yaml_string.as_bytes())?;
         Ok(())
@@ -289,6 +289,39 @@ fn export_as_yaml(character: &CharacterClass, format_type: &str) -> PyResult<Str
     }
 }
 
+fn export_as_neutral_yaml(character: &CharacterClass) -> PyResult<String> {
+    let current_time = Utc::now().timestamp_millis();
+    let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
+        char_name: &character.name,
+        char_persona: if character.personality.is_empty() {
+            &character.summary
+        } else {
+            &character.personality
+        },
+        world_scenario: &character.scenario,
+        char_greeting: &character.greeting_message,
+        example_dialogue: &character.example_messages,
+        name: &character.name,
+        description: &character.summary,
+        personality: &character.personality,
+        scenario: &character.scenario,
+        first_mes: &character.greeting_message,
+        mes_example: &character.example_messages,
+        metadata: Metadata {
+            version: 1,
+            created: &character.created_time.unwrap_or(current_time),
+            modified: current_time,
+            source: None,
+            tool: Tooldata {
+                name: PROGRAM_INFO.name,
+                version: PROGRAM_INFO.version,
+                url: PROGRAM_INFO.url,
+            }
+        },
+    };
+    Ok(serde_yaml::to_string(&export_class).expect("Error while serializing YAML"))
+}
+
 fn export_as_json(character: &CharacterClass, format_type: &str) -> PyResult<String> {
     let current_time = Utc::now().timestamp_millis();
     match format_type.to_lowercase().as_str() {
@@ -369,6 +402,39 @@ fn export_as_json(character: &CharacterClass, format_type: &str) -> PyResult<Str
     }
 }
 
+fn export_as_neutral_json(character: &CharacterClass) -> PyResult<String> {
+    let current_time = Utc::now().timestamp_millis();
+    let export_class: ExportAllCharacterClass = ExportAllCharacterClass {
+        char_name: &character.name,
+        char_persona: if character.personality.is_empty() {
+            &character.summary
+        } else {
+            &character.personality
+        },
+        world_scenario: &character.scenario,
+        char_greeting: &character.greeting_message,
+        example_dialogue: &character.example_messages,
+        name: &character.name,
+        description: &character.summary,
+        personality: &character.personality,
+        scenario: &character.scenario,
+        first_mes: &character.greeting_message,
+        mes_example: &character.example_messages,
+        metadata: Metadata {
+            version: 1,
+            created: &character.created_time.unwrap_or(current_time),
+            modified: current_time,
+            source: None,
+            tool: Tooldata {
+                name: PROGRAM_INFO.name,
+                version: PROGRAM_INFO.version,
+                url: PROGRAM_INFO.url,
+            }
+        },
+    };
+    Ok(serde_json::to_string_pretty(&export_class).expect("Error while serializing JSON"))
+}
+
 fn export_as_card(character: &CharacterClass, format_type: &str) -> PyResult<Vec<u8>> {
     let character_image = match &character.image_path {
         Some(v) => v,
@@ -390,9 +456,9 @@ fn export_as_card(character: &CharacterClass, format_type: &str) -> PyResult<Vec
         encoder.set_depth(info.bit_depth);
         let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
         let character_base64 = if format_type == "neutral" {
-            engine.encode(character.export_neutral_json()?)
+            engine.encode(export_as_neutral_json(character)?)
         } else {
-            engine.encode(character.export_json(format_type)?)
+            engine.encode(export_as_json(character, format_type)?)
         };
 
         encoder.add_text_chunk(
