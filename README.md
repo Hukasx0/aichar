@@ -32,6 +32,17 @@ character = aichar.create_character(
 character = aichar.load_character_card_file("character_card.png")
 ```
 
+### Loading a Character data from a PNG Character Card Bytes
+```py
+character = aichar.load_character_card(data_bytes)
+```
+
+Where ***data_bytes*** can be e.g. bytes of the opened png file of the character card
+```py
+with open("character_card.png", 'rb') as file:
+   data_bytes = file.read()
+```
+
 ### Loading a Character data from a JSON File
 ```py
 character = aichar.load_character_json_file("character.json")
@@ -179,6 +190,25 @@ neutral_yaml_string = character.export_neutral_yaml()
 character.export_neutral_json_file("neutral_character_data.json")
 character.export_neutral_yaml_file("neutral_character_data.yml")
 character.export_neutral_card_file("neutral_card_name.png")
+```
+
+Exporting character cards as bytes
+```py
+character_neutral_bytes_list = character.export_neutral_card()
+# you can also export in any format you choose
+character_sillytavern_bytes_list = character.export_card("sillytavern")
+```
+Why bytes_list and not just bytes?
+
+Both .export_neutral_card() and .export_card() methods return 'bytes': 'list', if you need bytes then you can use the python function bytes() to convert the data to 'PyBytes'.
+For example, you will get an error like this: 
+```TypeError: argument 'bytes': 'list' object cannot be converted to 'PyBytes'```
+
+Example of a solution to a problem:
+```py
+character_neutral_bytes = bytes(character.export_neutral_card())
+# then you can perform the same operations on it as you would on bytes
+new_character = aichar.load_character_card(character_neutral_bytes)
 ```
 
 ## License
