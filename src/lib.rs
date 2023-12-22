@@ -27,13 +27,13 @@ use serde::{Deserialize, Serialize};
 use base64::{Engine, engine::GeneralPurpose, engine::GeneralPurposeConfig, alphabet::STANDARD};
 use png::Decoder;
 use chrono::Utc;
-use std::fs::File;
+use std::{fs, fs::File};
 use std::io::{Read, Write, Cursor};
 
 
 static PROGRAM_INFO: ProgramInfo = ProgramInfo {
     name: "aichar Python library",
-    version: "1.0.0",
+    version: "1.0.1",
     url: "https://github.com/Hukasx0/aichar",
 };
 
@@ -137,12 +137,24 @@ impl CharacterClass {
     }
 
     #[setter]
-    fn set_image_path(&mut self, image_path: &str) {
-        self.image_path = Some(image_path.to_string());
+    fn set_image_path(&mut self, image_path: &str) -> PyResult<()> {
+        if image_path.to_lowercase().ends_with(".png") {
+            if let Ok(metadata) = fs::metadata(image_path) {
+                if metadata.is_file() {
+                    self.image_path = Some(image_path.to_string());
+                    return Ok(());
+                } else {
+                    return Err(pyo3::exceptions::PyValueError::new_err("Specified path is not a file"));
+                }
+            } else {
+                return Err(pyo3::exceptions::PyValueError::new_err(format!("'{}' file does not exist", image_path)));
+            }
+        }
+        Err(pyo3::exceptions::PyValueError::new_err("Invalid file extension. Image file must have a .png extension"))
     }
 
     fn export_json(&self, format_type: &str) -> PyResult<String> {
-        Ok(export_as_json(self, format_type)?)
+        export_as_json(self, format_type)
     }
 
     fn export_json_file(&self, format_type: &str, export_json_path: &str) -> PyResult<()> {
@@ -153,7 +165,7 @@ impl CharacterClass {
     }
 
     fn export_neutral_json(&self) -> PyResult<String> {
-        Ok(export_as_neutral_json(self)?)
+        export_as_neutral_json(self)
     }
 
     fn export_neutral_json_file(&self, export_json_path: &str) -> PyResult<()> {
@@ -164,7 +176,7 @@ impl CharacterClass {
     }
 
     fn export_yaml(&self, format_type: &str) -> PyResult<String> {
-        Ok(export_as_yaml(&self, format_type)?)
+        export_as_yaml(self, format_type)
     }
 
     fn export_yaml_file(&self, format_type: &str, export_yaml_path: &str) -> PyResult<()> {
@@ -175,7 +187,7 @@ impl CharacterClass {
     }
 
     fn export_neutral_yaml(&self) -> PyResult<String> {
-        Ok(export_as_neutral_yaml(self)?)
+        export_as_neutral_yaml(self)
     }
 
     fn export_neutral_yaml_file(&self, export_yaml_path: &str) -> PyResult<()> {
@@ -186,7 +198,7 @@ impl CharacterClass {
     }
 
     fn export_card(&self, format_type: &str) -> PyResult<Vec<u8>> {
-        Ok(export_as_card(self, &format_type)?)
+        export_as_card(self, format_type)
     }
 
     fn export_card_file(&self, format_type: &str, export_card_path: &str) -> PyResult<()> {
@@ -197,7 +209,7 @@ impl CharacterClass {
     }
 
     fn export_neutral_card(&self) -> PyResult<Vec<u8>> {
-        Ok(export_as_card(self, "neutral")?)
+        export_as_card(self, "neutral")
     }
 
     fn export_neutral_card_file(&self, export_card_path: &str) -> PyResult<()> {
@@ -442,10 +454,11 @@ fn export_as_card(character: &CharacterClass, format_type: &str) -> PyResult<Vec
         }
     };
 
-    let decoder = Decoder::new(File::open(character_image)?);
-    let mut reader = decoder.read_info().unwrap();
+    let file = File::open(character_image).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Failed to open image file '{}': {}", character_image, e)))?;
+    let decoder = Decoder::new(file);
+    let mut reader = decoder.read_info().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to read PNG info from file '{}' (Check if it is a valid, working PNG file): {}", character_image, e)))?;
     let mut buf = vec![0; reader.output_buffer_size()];
-    let info = reader.next_frame(&mut buf).unwrap();
+    let info = reader.next_frame(&mut buf).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to read PNG frame from file '{}' (Check if it is a valid, working PNG file): {}", character_image, e)))?;
     let bytes = &buf[..info.buffer_size()];
 
     let mut encoded_data = Vec::new();
@@ -454,6 +467,7 @@ fn export_as_card(character: &CharacterClass, format_type: &str) -> PyResult<Vec
         encoder.set_color(info.color_type);
         encoder.set_depth(info.bit_depth);
         let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
+
         let character_base64 = if format_type == "neutral" {
             engine.encode(export_as_neutral_json(character)?)
         } else {
@@ -463,9 +477,9 @@ fn export_as_card(character: &CharacterClass, format_type: &str) -> PyResult<Vec
         encoder.add_text_chunk(
             "chara".to_string(),
             character_base64,
-        ).unwrap();
-        let mut writer = encoder.write_header().unwrap();
-        writer.write_image_data(bytes).unwrap();
+        ).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to add text chunk: {}", e)))?;
+        let mut writer = encoder.write_header().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to write PNG header: {}", e)))?;
+        writer.write_image_data(bytes).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to write PNG image data: {}", e)))?;
     }
 
     Ok(encoded_data)
@@ -624,7 +638,7 @@ fn load_character_yaml_file(path: &str) -> PyResult<CharacterClass> {
 #[pyfunction]
 fn load_character_card(bytes: &[u8]) -> PyResult<CharacterClass> {
     let decoder = png::Decoder::new(Cursor::new(bytes));
-    let reader = decoder.read_info().unwrap();
+    let reader = decoder.read_info().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to read PNG info: {}", e)))?;
     let character_base64_option: Option<String> = reader.info().uncompressed_latin1_text.iter()
         .filter(|text_chunk| text_chunk.keyword == "chara")
         .map(|text_chunk| text_chunk.text.clone())
@@ -674,7 +688,7 @@ fn load_character_card(bytes: &[u8]) -> PyResult<CharacterClass> {
 #[pyfunction]
 fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
     let decoder = png::Decoder::new(File::open(path)?);
-    let reader = decoder.read_info().unwrap();
+    let reader = decoder.read_info().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to read PNG info: {}", e)))?;
     let character_base64_option: Option<String> = reader.info().uncompressed_latin1_text.iter()
         .filter(|text_chunk| text_chunk.keyword == "chara")
         .map(|text_chunk| text_chunk.text.clone())
@@ -710,7 +724,7 @@ fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
         scenario: char_data.world_scenario.unwrap_or(char_data.scenario.unwrap_or(String::from(""))),
         greeting_message: char_data.char_greeting.unwrap_or(char_data.first_mes.unwrap_or(String::from(""))),
         example_messages: char_data.example_dialogue.unwrap_or(char_data.mes_example.unwrap_or(String::from(""))),
-        image_path: None,
+        image_path: Some(path.to_string()),
         created_time: char_data.metadata.and_then(|time_metadata| time_metadata.created),
     })
 }

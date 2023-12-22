@@ -214,4 +214,9 @@ new_character = aichar.load_character_card(character_neutral_bytes)
 ## License
 2023-2024 Hubert Kasperek
 
-This library is distributed under the MIT License.
+At any time when using the library, you can read the content of the license by calling the ***.license()*** method
+```py
+print( aichar.license() )
+```
+
+This library is distributed under the [MIT License](https://github.com/Hukasx0/aichar/blob/main/LICENSE).
