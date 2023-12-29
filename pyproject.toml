@@ -4,6 +4,13 @@ build-backend = "maturin"
 
 [project]
 name = "aichar"
+description = "Library for creating/transporting/parsing AI characters between different frontends (TavernAI, SillyTavern, TextGenerationWebUI, AI-companion, Pygmalion) written in Rust"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Hubert Kasperek", email = "hubertkasp13@gmail.com"}
+]
+keywords = ["character cards", "Rust", "parser", "editor", "TavernAI", "SillyTavern", "TextGenerationWebUI", "AI-Companion", "Pygmalion"]
+
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Rust",
@@ -11,6 +18,9 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+[project.urls]
+repository = "https://github.com/Hukasx0/aichar"
+Documentation = "https://github.com/Hukasx0/aichar/blob/main/README.md"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
