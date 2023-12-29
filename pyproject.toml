@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.urls]
-repository = "https://github.com/Hukasx0/aichar"
+Repository = "https://github.com/Hukasx0/aichar"
 Documentation = "https://github.com/Hukasx0/aichar/blob/main/README.md"
 
 [tool.maturin]
