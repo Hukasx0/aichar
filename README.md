@@ -14,12 +14,19 @@ and you can follow the steps from [Usage](#usage) to use the library
 ## Building library
 If you are only interested in downloading the library and using it, just follow the [installation step](#installation).
 
-This option is only for code experiments, testing, or when the `pip install aichar` command cannot download the library for some reason.
+This option is only for building manually, code experiments, testing, or when the `pip install aichar` command cannot download the library for some reason.
 
-This library uses Pyo3 and Maturin, so we will follow the steps from [this documentation](https://pyo3.rs/v0.20.2/getting_started).
+This library uses PyO3 and Maturin for building, so we will follow the steps from [this documentation](https://pyo3.rs/v0.20.2/getting_started).
 
 1. Install [Rust and Cargo](https://www.rust-lang.org/) and [Python](https://www.python.org/)
-2. Create a Virtual Environment
+2. clone git repository
+```sh
+git clone https://github.com/Hukasx0/aichar
+```
+```
+cd aichar/
+```
+3. Create a Virtual Environment
 ```sh
 python -m venv venv
 ```
@@ -31,11 +38,11 @@ for windows use
 ```
 venv\Scripts\activate
 ```
-3. install Maturin (in a virtual environment)
+4. install Maturin (in a virtual environment)
 ```
 pip install maturin
 ```
-4. Build the Library
+5. Build the Library
 
 development:
 ```sh
@@ -45,7 +52,7 @@ production:
 ```sh
 maturin build
 ```
-5. Test in Python
+6. Test in Python
 ```py
 import aichar
 
