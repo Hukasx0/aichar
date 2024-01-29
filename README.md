@@ -9,6 +9,48 @@ This library allows you to read JSON, Yaml and character card files, edit their 
 ```py
 pip install aichar
 ```
+and you can follow the steps from [Usage](#usage) to use the library
+
+## Building library
+If you are only interested in downloading the library and using it, just follow the [installation step](#installation).
+
+This option is only for code experiments, testing, or when the `pip install aichar` command cannot download the library for some reason.
+
+This library uses Pyo3 and Maturin, so we will follow the steps from [this documentation](https://pyo3.rs/v0.20.2/getting_started).
+
+1. Install [Rust and Cargo](https://www.rust-lang.org/) and [Python](https://www.python.org/)
+2. Create a Virtual Environment
+```sh
+python -m venv venv
+```
+And activate the virtual environment
+```sh
+source venv/bin/activate
+```
+for windows use
+```
+venv\Scripts\activate
+```
+3. install Maturin (in a virtual environment)
+```
+pip install maturin
+```
+4. Build the Library
+
+development:
+```sh
+maturin develop
+```
+production:
+```sh
+maturin build
+```
+5. Test in Python
+```py
+import aichar
+
+print( aichar.license() ) # it should print the library license to the console
+```
 
 ## Usage
 ### Creating a Character
