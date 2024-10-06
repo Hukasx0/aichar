@@ -1,6 +1,7 @@
 # Aichar
 [![PyPI version](https://badge.fury.io/py/aichar.svg)](https://badge.fury.io/py/aichar)
-[![Downloads](https://img.shields.io/pypi/dm/aichar.svg)]()
+[![Downloads](https://static.pepy.tech/badge/aichar)](https://pepy.tech/project/aichar)
+[![Downloads per month](https://img.shields.io/pypi/dm/aichar.svg)]()
 
 Python library for creating/editing/transporting AI characters between different frontends ([TavernAI](https://github.com/TavernAI/TavernAI), [SillyTavern](https://github.com/SillyTavern/SillyTavern), [TextGenerationWebUI](https://github.com/oobabooga/text-generation-webui), [AI-companion](https://github.com/Hukasx0/ai-companion), Pygmalion) 
 
