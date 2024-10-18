@@ -33,7 +33,7 @@ use std::io::{Read, Write, Cursor, BufReader, Seek, SeekFrom};
 
 static PROGRAM_INFO: ProgramInfo = ProgramInfo {
     name: "aichar Python library",
-    version: "1.0.2",
+    version: "1.0.4",
     url: "https://github.com/Hukasx0/aichar",
 };
 
