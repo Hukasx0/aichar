@@ -646,8 +646,34 @@ fn load_character_card(bytes: &[u8]) -> PyResult<CharacterClass> {
     let character_base64: String = match character_base64_option {
         Some(v) => v,
         None => {
-            let text_chunk_start = bytes.windows(9).position(|window| window == b"tEXtchara").ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?;
-            let text_chunk_end = bytes.windows(4).rposition(|window| window == b"IEND").ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?;
+            let text_chunk_start = bytes.windows(9).position(|window| window == b"tEXtchara").ok_or_else(|| 
+                pyo3::exceptions::PyValueError::new_err(
+                    r#"Failed to find 'chara' metadata (tEXt chunk) in the PNG file. This may occur due to:
+            1. The file is not a valid character card (Tavern Card V1 format).
+            2. The file may be corrupted or incomplete.
+            3. The character data might be stored in a different format.
+            
+            Please ensure that:
+            - You are using a file created by a compatible character creation tool.
+            - The file hasn't been modified or damaged.
+            - You are using the correct file format for your character data.
+            
+            If the problem persists, try re-exporting the character from its original creation tool."#
+                ))?;
+            let text_chunk_end = bytes.windows(4).rposition(|window| window == b"IEND").ok_or_else(|| 
+                pyo3::exceptions::PyValueError::new_err(
+                    r#"Failed to find 'chara' metadata (tEXt chunk) in the PNG file. This may occur due to:
+            1. The file is not a valid character card (Tavern Card V1 format).
+            2. The file may be corrupted or incomplete.
+            3. The character data might be stored in a different format.
+            
+            Please ensure that:
+            - You are using a file created by a compatible character creation tool.
+            - The file hasn't been modified or damaged.
+            - You are using the correct file format for your character data.
+            
+            If the problem persists, try re-exporting the character from its original creation tool."#
+                ))?;
             String::from_utf8_lossy(&bytes[text_chunk_start + 10..text_chunk_end - 8]).to_string()
         }
     };
@@ -704,7 +730,20 @@ fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
         reader.read_to_end(&mut buffer)?;
 
         find_chara_chunk(&buffer)
-            .ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?
+            .ok_or_else(|| 
+                pyo3::exceptions::PyValueError::new_err(
+                    r#"Failed to find 'chara' metadata (tEXt chunk) in the PNG file. This may occur due to:
+            1. The file is not a valid character card (Tavern Card V1 format).
+            2. The file may be corrupted or incomplete.
+            3. The character data might be stored in a different format.
+            
+            Please ensure that:
+            - You are using a file created by a compatible character creation tool.
+            - The file hasn't been modified or damaged.
+            - You are using the correct file format for your character data.
+            
+            If the problem persists, try re-exporting the character from its original creation tool."#
+                ))?
     };
 
     let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
