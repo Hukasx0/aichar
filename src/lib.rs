@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2023-2024 Hubert Kasperek
+    Copyright (c) 2023-2025 Hubert Kasperek
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ use base64::{Engine, engine::GeneralPurpose, engine::GeneralPurposeConfig, alpha
 use png::Decoder;
 use chrono::Utc;
 use std::{fs, fs::File};
-use std::io::{Read, Write, Cursor};
+use std::io::{Read, Write, Cursor, BufReader, Seek, SeekFrom};
 
 
 static PROGRAM_INFO: ProgramInfo = ProgramInfo {
@@ -687,46 +687,58 @@ fn load_character_card(bytes: &[u8]) -> PyResult<CharacterClass> {
 
 #[pyfunction]
 fn load_character_card_file(path: &str) -> PyResult<CharacterClass> {
-    let decoder = png::Decoder::new(File::open(path)?);
-    let reader = decoder.read_info().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to read PNG info: {}", e)))?;
-    let character_base64_option: Option<String> = reader.info().uncompressed_latin1_text.iter()
-        .filter(|text_chunk| text_chunk.keyword == "chara")
-        .map(|text_chunk| text_chunk.text.clone())
-        .next();
-        let character_base64: String = match character_base64_option {
-            Some(v) => v,
-            None => {
-                let mut f_buffer = Vec::new();
-                File::open(path)?.read_to_end(&mut f_buffer)?;
-                let text_chunk_start = f_buffer.windows(9).position(|window| window == b"tEXtchara").ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?;
-                let text_chunk_end = f_buffer.windows(4).rposition(|window| window == b"IEND").ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?;
-                String::from_utf8_lossy(&f_buffer[text_chunk_start + 10..text_chunk_end - 8]).to_string()
-            }
-        };
+    let file = File::open(path)?;
+    let mut reader = BufReader::new(file);
+    
+    let decoder = png::Decoder::new(&mut reader);
+    let reader_info = decoder.read_info().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Failed to read PNG info: {}", e)))?;
+    let character_base64 = reader_info.info().uncompressed_latin1_text.iter()
+        .find(|text_chunk| text_chunk.keyword == "chara")
+        .map(|text_chunk| text_chunk.text.clone());
+
+    let character_base64 = if let Some(base64) = character_base64 {
+        base64
+    } else {
+        reader.seek(SeekFrom::Start(0))?;
+        let mut buffer = Vec::new();
+        reader.read_to_end(&mut buffer)?;
+
+        find_chara_chunk(&buffer)
+            .ok_or_else(|| pyo3::exceptions::PyValueError::new_err("No tEXt chunk with name 'chara' found"))?
+    };
+
     let engine = GeneralPurpose::new(&STANDARD, GeneralPurposeConfig::new());
-    let character_bytes = match engine.decode(character_base64) {
-        Ok(b) => b,
-        Err(e) => {
-            return Err(pyo3::exceptions::PyValueError::new_err(format!("Error while decoding base64 character data from character card: {:?}", e)));
-        }
-    };
-    let character_text: &str = match std::str::from_utf8(&character_bytes) {
-        Ok(s) => s,
-        Err(e) => {
-            return Err(pyo3::exceptions::PyValueError::new_err(format!("Error while parsing decoded base64 bytes to utf8 string: {:?}", e)));
-        }
-    };
-    let char_data: LoadCharacterClass = serde_json::from_str(character_text).expect("Your image file does not contain correct json data");
+    let character_bytes = engine.decode(character_base64)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Error while decoding base64 character data: {:?}", e)))?;
+
+    let character_text = std::str::from_utf8(&character_bytes)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Error while parsing decoded base64 bytes to utf8 string: {:?}", e)))?;
+
+    let char_data: LoadCharacterClass = serde_json::from_str(character_text)
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("Your image file does not contain correct json data"))?;
+
     Ok(CharacterClass {
-        name: char_data.char_name.unwrap_or(char_data.name.unwrap_or(String::from(""))),
-        summary: char_data.summary.unwrap_or(char_data.description.unwrap_or(String::from(""))),
-        personality: char_data.char_persona.unwrap_or(char_data.personality.unwrap_or(String::from(""))),
-        scenario: char_data.world_scenario.unwrap_or(char_data.scenario.unwrap_or(String::from(""))),
-        greeting_message: char_data.char_greeting.unwrap_or(char_data.first_mes.unwrap_or(String::from(""))),
-        example_messages: char_data.example_dialogue.unwrap_or(char_data.mes_example.unwrap_or(String::from(""))),
+        name: char_data.char_name.or(char_data.name).unwrap_or_default(),
+        summary: char_data.summary.or(char_data.description).unwrap_or_default(),
+        personality: char_data.char_persona.or(char_data.personality).unwrap_or_default(),
+        scenario: char_data.world_scenario.or(char_data.scenario).unwrap_or_default(),
+        greeting_message: char_data.char_greeting.or(char_data.first_mes).unwrap_or_default(),
+        example_messages: char_data.example_dialogue.or(char_data.mes_example).unwrap_or_default(),
         image_path: Some(path.to_string()),
         created_time: char_data.metadata.and_then(|time_metadata| time_metadata.created),
     })
+}
+
+fn find_chara_chunk(buffer: &[u8]) -> Option<String> {
+    let chara_marker = b"tEXtchara";
+    let iend_marker = b"IEND";
+
+    let start = buffer.windows(chara_marker.len())
+        .position(|window| window == chara_marker)?;
+    let end = buffer.windows(iend_marker.len())
+        .rposition(|window| window == iend_marker)?;
+
+    Some(String::from_utf8_lossy(&buffer[start + chara_marker.len() + 1..end - 8]).into_owned())
 }
 
 #[pyfunction]
@@ -734,7 +746,7 @@ fn license() -> &'static str {
     r#"
     MIT License
 
-    Copyright (c) 2023-2024 Hubert Kasperek
+    Copyright (c) 2023-2025 Hubert Kasperek
     
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal

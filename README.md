@@ -262,7 +262,7 @@ new_character = aichar.load_character_card(character_neutral_bytes)
 ```
 
 ## License
-2023-2024 Hubert Kasperek
+2023-2025 Hubert Kasperek
 
 At any time when using the library, you can read the content of the license by calling the ***.license()*** method
 ```py
