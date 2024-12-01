@@ -9,7 +9,7 @@ name = "aichar"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.20.1"
+pyo3 = "0.23.2"
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
 serde_yaml = "0.9.29"
