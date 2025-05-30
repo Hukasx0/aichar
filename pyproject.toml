@@ -5,6 +5,7 @@ build-backend = "maturin"
 [project]
 name = "aichar"
 description = "Library for creating/transporting/parsing AI characters between different frontends (TavernAI, SillyTavern, TextGenerationWebUI, AI-companion, Pygmalion) written in Rust"
+dynamic = ["version"]
 license = {file = "LICENSE"}
 authors = [
     {name = "Hubert Kasperek", email = "hubertkasp13@gmail.com"}
