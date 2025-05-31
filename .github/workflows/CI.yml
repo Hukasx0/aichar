@@ -120,7 +120,7 @@ jobs:
           args: --release --out dist --find-interpreter
       - name: Install package
         run: |
-          pip install dist/*.whl
+          pip install dist/*cp310*.whl
       - name: Test basic functionality
         run: |
           python -c "import aichar; char = aichar.create_character('test', 'test', 'test', 'test', 'test', 'test', ''); print('Import works:', char.name)"
