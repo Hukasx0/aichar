@@ -3,9 +3,9 @@
 [![Downloads](https://static.pepy.tech/badge/aichar)](https://pepy.tech/project/aichar)
 [![Downloads per month](https://img.shields.io/pypi/dm/aichar.svg)]()
 
-Python library for creating/editing/transporting AI characters between different frontends ([TavernAI](https://github.com/TavernAI/TavernAI), [SillyTavern](https://github.com/SillyTavern/SillyTavern), [TextGenerationWebUI](https://github.com/oobabooga/text-generation-webui), [AI-companion](https://github.com/Hukasx0/ai-companion), Pygmalion) 
+Python library for creating/editing/transporting AI characters between different frontends ([TavernAI](https://github.com/TavernAI/TavernAI), [SillyTavern](https://github.com/SillyTavern/SillyTavern), [TextGenerationWebUI](https://github.com/oobabooga/text-generation-webui), [AI-companion](https://github.com/Hukasx0/ai-companion), Pygmalion) and character generation tools like [Character Factory](https://github.com/Hukasx0/character-factory).
 
-This library allows you to read JSON, Yaml and character card files, edit their data, create your characters from scratch and export them as JSON, Yaml or character cards compatible with the frontends mentioned above
+This library allows you to read JSON, Yaml and character card files, edit their data, create your characters from scratch and export them as JSON, Yaml or character cards compatible with the frontends mentioned above. It's also used by Character Factory - a tool for generating characters using LLM and Stable Diffusion.
 ## Installation
 ```py
 pip install aichar
@@ -242,7 +242,31 @@ character.export_neutral_yaml_file("neutral_character_data.yml")
 character.export_neutral_card_file("neutral_card_name.png")
 ```
 
-Exporting character cards as bytes
+## Related Projects
+
+### Character Factory
+[Character Factory](https://github.com/Hukasx0/character-factory) is a powerful tool for generating AI characters using Large Language Models (LLM) and Stable Diffusion. It uses this aichar library to create character cards compatible with various AI frontends.
+
+**Features:**
+- Generate characters with LLM (Mistral, Zephyr)
+- Create character avatars with Stable Diffusion
+- Web interface for easy character generation
+- Direct export to aichar-compatible formats
+- Support for custom prompts and topics
+- Uses neutral export format (JSON/card) for maximum compatibility across all frontends
+
+**Usage with aichar:**
+```python
+# Character Factory generates characters using neutral format for universal compatibility
+character = aichar.load_character_card_file("generated_character.card.png")
+print(f"Generated character: {character.name}")
+
+# Character Factory uses neutral export, equivalent to:
+# character.export_neutral_json()  # Works with all frontends
+# character.export_neutral_card()  # Universal character card format
+```
+
+## Exporting character cards as bytes
 ```py
 character_neutral_bytes_list = character.export_neutral_card()
 # you can also export in any format you choose

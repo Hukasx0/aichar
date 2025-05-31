@@ -4,13 +4,13 @@ build-backend = "maturin"
 
 [project]
 name = "aichar"
-description = "Library for creating/transporting/parsing AI characters between different frontends (TavernAI, SillyTavern, TextGenerationWebUI, AI-companion, Pygmalion) written in Rust"
+description = "Library written in Rust for creating/transporting/parsing AI characters between different frontends (TavernAI, SillyTavern, TextGenerationWebUI, AI-companion, Pygmalion) and generation tools (Character Factory)"
 dynamic = ["version"]
 license = {file = "LICENSE"}
 authors = [
     {name = "Hubert Kasperek", email = "hubertkasp13@gmail.com"}
 ]
-keywords = ["character cards", "Rust", "parser", "editor", "TavernAI", "SillyTavern", "TextGenerationWebUI", "AI-Companion", "Pygmalion"]
+keywords = ["character cards", "Rust", "parser", "editor", "TavernAI", "SillyTavern", "TextGenerationWebUI", "AI-Companion", "Pygmalion", "Character Factory"]
 
 requires-python = ">=3.7"
 classifiers = [
