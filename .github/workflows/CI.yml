@@ -121,6 +121,9 @@ jobs:
       - name: Install package
         run: |
           pip install dist/*cp310*.whl
+      - name: Remove local aichar folder to avoid import conflicts
+        run: |
+          rm -rf aichar/
       - name: Test basic functionality
         run: |
           python -c "import aichar; char = aichar.create_character('test', 'test', 'test', 'test', 'test', 'test', ''); print('Import works:', char.name)"
