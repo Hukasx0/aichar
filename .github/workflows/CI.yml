@@ -115,7 +115,7 @@ jobs:
           pip install maturin mypy
       - name: Build package
         run: maturin develop
-            - name: Test basic functionality
+      - name: Test basic functionality
         run: |
           python -c "import aichar; char = aichar.create_character('test', 'test', 'test', 'test', 'test', 'test', ''); print('Import works:', char.name)"
           python -c "import aichar; print('CharacterClass available:', hasattr(aichar, 'CharacterClass'))"
